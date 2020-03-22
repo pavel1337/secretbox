@@ -1,0 +1,14 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "body"}}
+	{{with .Secret}}
+	<h2>Click to continue:</h2>
+	<form action='/secret/{{.Key}}' method='POST'>
+		<input name="continue" type="hidden" value="true">
+		<input type="submit" name="Show the secret">
+	</form>
+	<h4>Careful, this available only once</h4>
+	{{end}}
+{{end}}

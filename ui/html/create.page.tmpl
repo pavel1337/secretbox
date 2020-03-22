@@ -1,0 +1,31 @@
+{{template "base" .}}
+
+{{define "title"}}Create a New Secret{{end}}
+
+{{define "body"}}
+<h1>Paste a password, secret message or private link below.</h1>
+<form action='/secret/create' method='POST'>
+	{{with .Form}}
+		<div>
+			<label>Content:</label>
+			{{with .Errors.content}}
+				<label class="error">{{.}}</label>
+			{{end}}
+			<textarea name='content'>{{.Get "content"}}</textarea>
+		</div>
+		<div>
+			<label>Delete in:</label>
+			{{with .Errors.expires}}
+				<label class="error">{{.}}</label>
+			{{end}}
+			{{$exp := or (.Get "expires") "10"}}
+			<input type='radio' name='expires' value='10' {{if (eq $exp "10")}}checked{{end}}> Ten Minutes
+			<input type="radio" name="expires" value="60" {{if (eq $exp "60")}}checked{{end}}> One Hour
+			<input type="radio" name="expires" value="1440" {{if (eq $exp "1440")}}checked{{end}}> One Day
+		</div>
+		<div>
+			<input type="submit" name="Publish secret">
+		</div>
+	{{end}}
+</form>
+{{end}}

@@ -1,0 +1,11 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "body"}}
+	{{with .Secret}}
+	<div class='snippet'>
+		<pre><code>{{.Content}}</code></pre>
+	</div>
+	{{end}}
+{{end}}
