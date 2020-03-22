@@ -15,7 +15,7 @@ To keep sensitive info out of your emails and chats.
 
 ## Install
 
-Easiest way to install is just to download latest binary, create config.yml and create systemd file out of template.
+Easiest way to install is just to download latest binary and "ui" folder, create config.yml and create systemd file out of template.
 
 ### Credits
 
