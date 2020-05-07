@@ -19,11 +19,14 @@ Easiest way to install is just to download latest binary and "ui" folder, create
 
 ### Credits
 
-Inspired (and even stolen FAQ, sorry will change that later) by those guys:
-<a class="msg" href="https://onetimesecret.com/">One-Time Secret</a>
+Inspired by those guys:
+
+<a class="msg" href="https://onetimesecret.com/">One-Time Secret</a><br>
+
 <a class="msg" href="https://github.com/onetimesecret/onetimesecret">One-Time Secret Repository</a>
 
 Learned how to code Go from this guy and his awesome book:
 
 <a class="msg" href="https://www.alexedwards.net/">Alex Edwards</a>
+
 <a class="msg" href="https://lets-go.alexedwards.net/">Alex Edwards "Let's Go!"</a>
