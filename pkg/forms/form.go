@@ -51,6 +51,12 @@ func (f *Form) PermittedValues(field string, opts ...string) {
 	f.Errors.Add(field, "This field is invalid")
 }
 
+func (f *Form) CheckPassword(field string, pass string) {
+	if f.Get(field) != pass {
+		f.Errors.Add(field, "Password is invalid")
+	}
+}
+
 func (f *Form) Valid() bool {
 	return len(f.Errors) == 0
 }

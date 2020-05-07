@@ -1,17 +1,19 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/google/uuid"
+	"github.com/pavel1337/secretbox/pkg/crypt"
 )
 
 type Secret struct {
-	Key        string
-	EncContent []byte
-	Content    string
+	Key        string `json:"key"`
+	Content    string `json:"content"`
+	Passphrase string `json:"passphrase"`
 }
 
 type SecretModel struct {
@@ -19,17 +21,37 @@ type SecretModel struct {
 }
 
 var ErrNoRecord = errors.New("models: no matching record found")
+var ErrIncorrectPassphrase = errors.New("models: incorrect assphrase")
 
-func (m *SecretModel) Insert(encContent []byte, expires int) (string, error) {
+func (m *SecretModel) Insert(s Secret, e *[32]byte, expires int) (string, error) {
 	key := uuid.New().String()
-	_, err := m.DB.Set(key, encContent, (time.Duration(expires) * time.Minute)).Result()
+	j, err := json.Marshal(s)
+	if err != nil {
+		return key, err
+	}
+	value, err := crypt.EncryptSecret(j, e)
+	if err != nil {
+		return key, err
+	}
+	_, err = m.DB.Set(key, value, (time.Duration(expires) * time.Minute)).Result()
 	if err != nil {
 		return key, err
 	}
 	return key, err
 }
 
-func (m *SecretModel) Get(key string) (*Secret, error) {
+func (m *SecretModel) Exists(key string) error {
+	i, err := m.DB.Exists(key).Result()
+	if err != nil {
+		return err
+	}
+	if i == 0 {
+		return ErrNoRecord
+	}
+	return nil
+}
+
+func (m *SecretModel) Get(key string, e *[32]byte) (*Secret, error) {
 	i, err := m.DB.Exists(key).Result()
 	if err != nil {
 		return nil, err
@@ -37,11 +59,21 @@ func (m *SecretModel) Get(key string) (*Secret, error) {
 	if i == 0 {
 		return nil, ErrNoRecord
 	}
-	encContent, err := m.DB.Get(key).Bytes()
+	value, err := m.DB.Get(key).Bytes()
 	if err != nil {
 		return nil, err
 	}
-	return &Secret{Key: key, EncContent: encContent}, nil
+	j, err := crypt.DecryptSecret(value, e)
+	if err != nil {
+		return nil, err
+	}
+	var s Secret
+	err = json.Unmarshal(j, &s)
+	if err != nil {
+		return nil, err
+	}
+	s.Key = key
+	return &s, nil
 }
 
 func (m *SecretModel) Delete(key string) error {

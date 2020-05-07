@@ -4,47 +4,59 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/pavel1337/secretbox/pkg/forms"
 	"github.com/pavel1337/secretbox/pkg/models"
 )
 
-func (app *application) showSecret(w http.ResponseWriter, r *http.Request) {
+func (app *application) showSecretForm(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.secrets.Get(id)
+	s, err := app.secrets.Get(id, app.encryptionKey)
 
 	if err == models.ErrNoRecord {
-		app.notFound(w)
+		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
 	} else if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.render(w, r, "show.page.tmpl", &templateData{
-		Secret: s,
+	app.render(w, r, "showForm.page.tmpl", &templateData{
+		Secret: s, Form: forms.New(nil),
 	})
 }
 
-func (app *application) showSecretTrue(w http.ResponseWriter, r *http.Request) {
+func (app *application) showSecret(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.secrets.Get(id)
+	s, err := app.secrets.Get(id, app.encryptionKey)
 
 	if err == models.ErrNoRecord {
-		app.notFound(w)
+		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
 	} else if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	content, err := DecryptSecret(s.EncContent, app.encryptionKey)
-	if err != nil {
-		app.serverError(w, err)
+	form := forms.New(r.PostForm)
+	form.MaxLength("passphrase", 1024)
+	form.CheckPassword("passphrase", s.Passphrase)
+
+	if !form.Valid() {
+		form.Del("passphrase")
+		app.render(w, r, "showForm.page.tmpl", &templateData{Secret: s, Form: form})
 		return
 	}
+
 	err = app.secrets.Delete(id)
 	if err == models.ErrNoRecord {
 		app.notFound(w)
@@ -54,8 +66,7 @@ func (app *application) showSecretTrue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Content = string(content)
-	app.render(w, r, "show_true.page.tmpl", &templateData{
+	app.render(w, r, "show.page.tmpl", &templateData{
 		Secret: s,
 	})
 }
@@ -76,6 +87,7 @@ func (app *application) createSecret(w http.ResponseWriter, r *http.Request) {
 	form := forms.New(r.PostForm)
 	form.Required("content", "expires")
 	form.MaxLength("content", 1024)
+	form.MaxLength("passphrase", 1024)
 	form.PermittedValues("expires", "10", "60", "1440")
 
 	if !form.Valid() {
@@ -83,13 +95,18 @@ func (app *application) createSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encContent, err := EncryptSecret([]byte(form.Get("content")), app.encryptionKey)
-	if err != nil {
-		app.serverError(w, err)
-		return
+	var s models.Secret
+
+	s.Content = form.Get("content")
+
+	if strings.TrimSpace(form.Get("passphrase")) != "" {
+		s.Passphrase = form.Get("passphrase")
+	} else {
+		s.Passphrase = ""
 	}
+
 	i, _ := strconv.Atoi(form.Get("expires"))
-	key, err := app.secrets.Insert(encContent, i)
+	key, err := app.secrets.Insert(s, app.encryptionKey, i)
 	if err != nil {
 		app.serverError(w, err)
 		return
