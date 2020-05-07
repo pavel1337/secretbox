@@ -4,14 +4,14 @@
 
 {{define "body"}}
 	{{with .Form}}
-		<h3>F.A.Q.</h3>
-		<h4>What happens when I burn a secret?</h4>
+		<h5><b>F.A.Q.</b></h5>
+		<b>What happens when I burn a secret?</b>
 		<p>Burning a secret will delete it before it has been read. If you send someone a secret link and burn the secret before they view it, they will not be able to read it. In fact, it will look to them like the secret never existed at all.</p>
 
-		<h4>Why can I only see the secret value once?</h4>
+		<b>Why can I only see the secret value once?</b>
 		<p>We display the value for you so that you can verify it but we do that once so that if someone gets this private page (in your browser history or if you accidentally send the private link instead of the secret one), they won't see the secret value.</p>
 
-		<h4>How long will the secret be available?</h4>
+		<b>How long will the secret be available?</b>
 		<p>The secret link will be available for {{.Get "expires"}} minutes or until it's viewed.</p>
 	{{end}}
 {{end}}

@@ -2,35 +2,37 @@
 <!doctype html>
 <html lang='en'>
 	<head>
-		<meta charset='utf-8'>
+		<meta charset="utf-8">
 		<title>{{template "title" .}} - SecretBox</title>
-		<link rel='stylesheet' href='/static/css/main.css'>
-		<link rel='shortcut icon'href='/static/img/favicon.ico'type='image/x-icon'>
-		<link rel='stylesheet'href='https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700'>
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="/static/css/normalize.css">
+		<link rel="stylesheet" href="/static/css/skeleton.css">
+		<link rel="icon" type="image/png" href="/static/img/favicon.png">
 	</head>
+
 	<body>
+    	<div class="container">
+
 		<header>
-			<h1><a href='/'>SecretBox</a></h1>
-		</header>
-		<nav>
-			<div>
-				<a href='/'>Home</a>
-				<a href='/secret/create'>Create secret</a>
+				<h4><a href='/'>SecretBox</a></h4>
+<!-- 			<div class="one-half column">
+				<a class="button" href='/secret/create'>Create secret</a>
 			</div>
+ -->		</header>
 			<div>
 			</div>
-		</nav>
-		<section>
 			{{with .Flash}}
 			<div class="flash">
-				<p>Share this link:</p>
-				<a href="{{.}}">{{.}}</a>
+				Share this link:
+				<a href="{{.}}">link to secret</a>
 			</div>
 			{{end}}
 			{{template "body" .}}
-		</section>
 		{{template "footer" .}}
-		<script src="/static/js/main.js" type="text/javascript"></script>
+		</div>
 	</body>
 </html>
 {{end}}

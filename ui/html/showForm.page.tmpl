@@ -1,0 +1,25 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "body"}}
+	<h5>Click to reveal the secret:</h5>
+
+	{{with .Form.Errors.Get "passphrase"}}
+		<label class="u-full-width error">{{.}}</label>
+	{{end}}
+
+	{{with .Secret}}
+	<form action='/secret/{{.Key}}' method='POST'>
+		<input name="continue" type="hidden" value="true">
+		{{with .Passphrase}}
+			<div class="u-full-width">
+				<label for="passphrase">Passphrase:</label>
+				<input class="u-full-width" type="password" name="passphrase" id="passphrase" value="" autocomplete="off">
+	        </div>
+        {{end}}
+		<button class="u-full-width" type="submit">Show the secret*</button>
+	</form>
+	{{end}}
+	<p class="u-full-width">* Careful, this available only once</p>
+{{end}}

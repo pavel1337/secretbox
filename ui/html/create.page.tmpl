@@ -3,29 +3,46 @@
 {{define "title"}}Create a New Secret{{end}}
 
 {{define "body"}}
-<h1>Paste a password, secret message or private link below.</h1>
+<h6>Paste a password, secret message or private link below.</h6>
+
 <form action='/secret/create' method='POST'>
 	{{with .Form}}
 		<div>
-			<label>Content:</label>
-			{{with .Errors.content}}
-				<label class="error">{{.}}</label>
+			<label for="content">Content:</label>
+			{{with .Errors.Get "content"}}
+				<label class="u-full-width error">{{.}}</label>
 			{{end}}
-			<textarea name='content'>{{.Get "content"}}</textarea>
+			<textarea name='content' class="u-full-width" id="content">{{.Get "content"}}</textarea>
 		</div>
-		<div>
-			<label>Delete in:</label>
-			{{with .Errors.expires}}
-				<label class="error">{{.}}</label>
+
+	    <div class="u-full-width">
+			<label for="expires">Delete in:</label>
+			{{with .Errors.Get "expires"}}
+				<label class="u-full-width error">{{.}}</label>
 			{{end}}
 			{{$exp := or (.Get "expires") "10"}}
-			<input type='radio' name='expires' value='10' {{if (eq $exp "10")}}checked{{end}}> Ten Minutes
-			<input type="radio" name="expires" value="60" {{if (eq $exp "60")}}checked{{end}}> One Hour
-			<input type="radio" name="expires" value="1440" {{if (eq $exp "1440")}}checked{{end}}> One Day
-		</div>
+			<select class="u-full-width" name="expires" id="expires">
+				<option value='10' {{if (eq $exp "10")}}selected{{end}}>Ten Minutes</option>
+		        <option value="60" {{if (eq $exp "60")}}selected{{end}}>One Hour</option>
+		        <option value="1440" {{if (eq $exp "1440")}}selected{{end}}>One Day</option>
+	      	</select>
+	    </div>
+		
+		<div class="u-full-width">
+			<label for="passphrase">Passphrase:</label>
+			{{with .Errors.Get "passphrase"}}
+				<label class="u-full-width error">{{.}}</label>
+			{{end}}
+			<input class="u-full-width" type="password" name="passphrase" id="passphrase" value="" placeholder="A word or phrase that's difficult to guess">
+        </div>
+
 		<div>
-			<input type="submit" name="Publish secret">
+			<button class="u-full-width" type="submit">Create a secret link*</button>
+			<p class="u-full-width">* A secret link only works once and then disappears forever.</p>
 		</div>
+
+
+
 	{{end}}
 </form>
 {{end}}
