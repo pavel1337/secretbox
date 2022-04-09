@@ -5,11 +5,33 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"io"
 )
 
-func EncryptSecret(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
-	block, err := aes.NewCipher(key[:])
+type Crypter interface {
+	Encrypt(plaintext []byte) ([]byte, error)
+	Decrypt(ciphertext []byte) ([]byte, error)
+}
+
+type AESGCM struct {
+	key []byte
+}
+
+var _ Crypter = &AESGCM{}
+
+func NewAESGCM(encryptionKey string) (*AESGCM, error) {
+	key := []byte(encryptionKey)
+	if len(key) != 32 {
+		return nil, fmt.Errorf("AESGCM: encryption key is not 32 characters: %v", encryptionKey)
+	}
+	return &AESGCM{
+		key: key,
+	}, nil
+}
+
+func (c *AESGCM) Encrypt(plaintext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(c.key)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +50,8 @@ func EncryptSecret(plaintext []byte, key *[32]byte) (ciphertext []byte, err erro
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-func DecryptSecret(ciphertext []byte, key *[32]byte) (plaintext []byte, err error) {
-	block, err := aes.NewCipher(key[:])
+func (c *AESGCM) Decrypt(ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(c.key)
 	if err != nil {
 		return nil, err
 	}
