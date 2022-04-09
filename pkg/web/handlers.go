@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"fmt"
@@ -7,18 +7,18 @@ import (
 	"strings"
 
 	"github.com/pavel1337/secretbox/pkg/forms"
-	"github.com/pavel1337/secretbox/pkg/models"
+	"github.com/pavel1337/secretbox/pkg/storage"
 )
 
-func (app *application) showSecretForm(w http.ResponseWriter, r *http.Request) {
+func (app *Web) showSecretForm(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.secrets.Get(id, app.encryptionKey)
-
-	if err == models.ErrNoRecord {
+	s, err := app.storage.Get(id)
+	if err == storage.ErrNoRecord {
 		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		app.serverError(w, err)
 		return
 	}
@@ -28,7 +28,7 @@ func (app *application) showSecretForm(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (app *application) showSecret(w http.ResponseWriter, r *http.Request) {
+func (app *Web) showSecret(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -37,12 +37,13 @@ func (app *application) showSecret(w http.ResponseWriter, r *http.Request) {
 
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.secrets.Get(id, app.encryptionKey)
+	s, err := app.storage.Get(id)
 
-	if err == models.ErrNoRecord {
+	if err == storage.ErrNoRecord {
 		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		app.serverError(w, err)
 		return
 	}
@@ -57,27 +58,36 @@ func (app *application) showSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.secrets.Delete(id)
-	if err == models.ErrNoRecord {
+	err = app.storage.Delete(id)
+	if err == storage.ErrNoRecord {
 		app.notFound(w)
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	plaintext, err := app.crypter.Decrypt(s.Content)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	s.Content = plaintext
 
 	app.render(w, r, "show.page.tmpl", &templateData{
 		Secret: s,
 	})
 }
 
-func (app *application) createSecretForm(w http.ResponseWriter, r *http.Request) {
+func (app *Web) createSecretForm(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "create.page.tmpl", &templateData{
 		Form: forms.New(nil),
 	})
 }
 
-func (app *application) createSecret(w http.ResponseWriter, r *http.Request) {
+func (app *Web) createSecret(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -95,9 +105,16 @@ func (app *application) createSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var s models.Secret
+	stringContent := form.Get("content")
 
-	s.Content = form.Get("content")
+	ciphertext, err := app.crypter.Encrypt([]byte(stringContent))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	var s storage.Secret
+	s.Content = ciphertext
 
 	if strings.TrimSpace(form.Get("passphrase")) != "" {
 		s.Passphrase = form.Get("passphrase")
@@ -105,13 +122,15 @@ func (app *application) createSecret(w http.ResponseWriter, r *http.Request) {
 		s.Passphrase = ""
 	}
 
-	i, _ := strconv.Atoi(form.Get("expires"))
-	key, err := app.secrets.Insert(s, app.encryptionKey, i)
+	ttlMinutes, _ := strconv.Atoi(form.Get("expires"))
+
+	id, err := app.storage.Insert(s, ttlMinutes)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	link := fmt.Sprintf("%s/secret/%s", app.config.Url, key)
+
+	link := fmt.Sprintf("%s/secret/%s", app.url, id)
 	app.session.Put(r, "flash", link)
 
 	app.render(w, r, "faq.page.tmpl", &templateData{Form: form})

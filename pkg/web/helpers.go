@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+func (app *Web) addDefaultData(td *templateData, r *http.Request) *templateData {
 	if td == nil {
 		td = &templateData{}
 	}
@@ -17,7 +17,7 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	return td
 }
 
-func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
+func (app *Web) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
 	ts, ok := app.templateCache[name]
 	if !ok {
 		app.serverError(w, fmt.Errorf("The template %s does not exist", name))
@@ -35,17 +35,17 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	buf.WriteTo(w)
 }
 
-func (app *application) serverError(w http.ResponseWriter, err error) {
+func (app *Web) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 
 	app.errorLog.Output(2, trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *application) clientError(w http.ResponseWriter, status int) {
+func (app *Web) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-func (app *application) notFound(w http.ResponseWriter) {
+func (app *Web) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }

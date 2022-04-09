@@ -1,11 +1,11 @@
-package main
+package web
 
 import (
 	"fmt"
 	"net/http"
 )
 
-func (app *application) recoverPanic(next http.Handler) http.Handler {
+func (app *Web) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -27,7 +27,7 @@ func secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) logRequest(next http.Handler) http.Handler {
+func (app *Web) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL)
 

@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"html/template"
@@ -6,22 +6,27 @@ import (
 	"time"
 
 	"github.com/pavel1337/secretbox/pkg/forms"
-	"github.com/pavel1337/secretbox/pkg/models"
+	"github.com/pavel1337/secretbox/pkg/storage"
 )
 
 type templateData struct {
 	CurrentYear int
 	Flash       string
 	Form        *forms.Form
-	Secret      *models.Secret
+	Secret      *storage.Secret
 }
 
 func humanDate(t time.Time) string {
 	return t.Format("02 Jan 2006 at 15:04")
 }
 
+func stringify(bb []byte) string {
+	return string(bb)
+}
+
 var functions = template.FuncMap{
 	"humanDate": humanDate,
+	"stringify": stringify,
 }
 
 func newTemplateCache(dir string) (map[string]*template.Template, error) {
