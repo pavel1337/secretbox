@@ -12,6 +12,7 @@ func (app *Web) routes() http.Handler {
 	dynamicMiddleware := alice.New(app.session.Enable)
 
 	mux := pat.New()
+	mux.Get("/ping", http.HandlerFunc(app.ping))
 	mux.Get("/", dynamicMiddleware.ThenFunc(app.createSecretForm))
 	mux.Get("/secret/create", dynamicMiddleware.ThenFunc(app.createSecretForm))
 	mux.Post("/secret/create", dynamicMiddleware.ThenFunc(app.createSecret))
