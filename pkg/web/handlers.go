@@ -87,6 +87,10 @@ func (app *Web) createSecretForm(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (app *Web) ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("pong"))
+}
+
 func (app *Web) createSecret(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
