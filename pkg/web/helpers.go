@@ -8,13 +8,34 @@ import (
 	"time"
 )
 
-func (app *Web) addDefaultData(td *templateData, r *http.Request) *templateData {
+func (app *Web) addDefaultData(td *templateData, w http.ResponseWriter, r *http.Request) *templateData {
 	if td == nil {
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
-	td.Flash = app.session.PopString(r, "flash")
+	td.Flash = app.flashOrEmpty(w, r)
 	return td
+}
+
+func (app *Web) flashOrEmpty(w http.ResponseWriter, r *http.Request) string {
+	// ignoring error as Get() always returns a session, even if empty
+	session, _ := app.session.Get(r, "session")
+	flashes := session.Flashes()
+	if len(flashes) != 1 {
+		return ""
+	}
+	err := session.Save(r, w)
+	if err != nil {
+		return ""
+	}
+	return flashes[0].(string)
+}
+
+func (app *Web) addFlash(w http.ResponseWriter, r *http.Request, link string) error {
+	// ignoring error as Get() always returns a session, even if empty
+	session, _ := app.session.Get(r, "session")
+	session.AddFlash(link)
+	return session.Save(r, w)
 }
 
 func (app *Web) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
@@ -26,7 +47,7 @@ func (app *Web) render(w http.ResponseWriter, r *http.Request, name string, td *
 
 	buf := new(bytes.Buffer)
 
-	err := ts.Execute(buf, app.addDefaultData(td, r))
+	err := ts.Execute(buf, app.addDefaultData(td, w, r))
 
 	if err != nil {
 		app.serverError(w, err)

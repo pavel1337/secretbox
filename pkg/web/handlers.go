@@ -135,7 +135,11 @@ func (app *Web) createSecret(w http.ResponseWriter, r *http.Request) {
 	}
 
 	link := fmt.Sprintf("%s/secret/%s", app.url, id)
-	app.session.Put(r, "flash", link)
+	err = app.addFlash(w, r, link)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
 
 	app.render(w, r, "faq.page.tmpl", &templateData{Form: form})
 	// http.Redirect(w, r, "/", http.StatusSeeOther)
