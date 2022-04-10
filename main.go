@@ -73,7 +73,7 @@ func cookieStore(typ string) sessions.Store {
 		if cookieSecret != "" {
 			cs = []byte(cookieSecret)
 		} else {
-			securecookie.GenerateRandomKey(32)
+			cs = securecookie.GenerateRandomKey(32)
 		}
 		session := sessions.NewCookieStore(cs)
 		session.MaxAge(maxCookieAge)
