@@ -3,73 +3,99 @@ package main
 import (
 	"context"
 	"flag"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/sessions"
 	"github.com/pavel1337/secretbox/pkg/crypt"
+	"github.com/pavel1337/secretbox/pkg/storage"
+	"github.com/pavel1337/secretbox/pkg/storage/inmem"
 	rs "github.com/pavel1337/secretbox/pkg/storage/redis"
 	"github.com/pavel1337/secretbox/pkg/web"
-	"gopkg.in/yaml.v2"
+	"github.com/rbcervilla/redisstore/v8"
 )
 
-type Config struct {
-	Redis      string `json:"redis"`
-	Encryption string `json:"encryption"`
-	Url        string `json:"url"`
+var (
+	addr                 string = os.Getenv("LISTEN_ADDRESS")
+	cookieSecret         string = os.Getenv("COOKIE_SECRET")
+	sessionStoreType     string = os.Getenv("SESSION_STORE_TYPE")
+	secretsStoreType     string = os.Getenv("SECRETS_STORE_TYPE")
+	secretsEncryptionKey string = os.Getenv("SECRETS_ENCRYPTION_KEY")
+	redisAddr            string = os.Getenv("REDIS_ADDR")
+	maxCookieAge         int    = 12 * 60 * 60 // 12 hours
+)
+
+func init() {
+	flag.StringVar(&addr, "addr", addr, "HTTP network address")
+	flag.StringVar(&cookieSecret, "cookie-key", cookieSecret, "key for cookie encryption")
+	flag.StringVar(&secretsEncryptionKey, "secrets-key", secretsEncryptionKey, "key for secrets encryption")
+	flag.StringVar(&sessionStoreType, "session-store-type", sessionStoreType, "type of cookie store (REDIS/INMEM(default)")
+	flag.StringVar(&secretsStoreType, "secrets-store-type", secretsStoreType, "type of secrets store (REDIS/INMEM(default)")
+	flag.StringVar(&redisAddr, "redis-addr", redisAddr, "redis address for redis store (defaults to 127.0.0.1:6379)")
 }
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	path := flag.String("c", "config.yml", "Path to a config file")
-	secret := flag.String("secret", "xii5ooph2qua2woo4oohahNain2iofie", "Secret key for cookie encryption")
-
 	flag.Parse()
-
-	c, err := parseConfig(*path)
+	crypter, err := crypt.NewAESGCM(secretsEncryptionKey)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("cannot create encryption service due to: %s", err)
 	}
 
-	db, err := initRedisClient(c.Redis, 1)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	store := rs.NewRedisStore(db)
+	session := cookieStore(sessionStoreType)
+	store := secretsStore(secretsStoreType)
 
-	crypter, err := crypt.NewAESGCM(c.Encryption)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = web.New(*secret, store, crypter).Start(*addr)
-	log.Fatalln(err)
+	err = web.New(session, store, crypter).Start(addr)
+	log.Fatalf("server failed due to: %s", err)
 
 }
 
-func initRedisClient(addr string, db int) (*redis.Client, error) {
+func cookieStore(typ string) sessions.Store {
+	switch typ {
+	case "REDIS":
+		db, err := initRedisClient(redisAddr)
+		if err != nil {
+			log.Fatalf("cannot connect to redis due to: %s", err)
+		}
+		store, err := redisstore.NewRedisStore(context.Background(), db)
+		if err != nil {
+			log.Fatalf("cannot create new redis session store due to: %s", err)
+		}
+
+		store.Options(sessions.Options{
+			MaxAge: maxCookieAge,
+		})
+		return store
+
+	default:
+		session := sessions.NewCookieStore([]byte(cookieSecret))
+		session.MaxAge(maxCookieAge)
+		return session
+	}
+}
+
+func secretsStore(typ string) storage.Store {
+	switch typ {
+	case "REDIS":
+		db, err := initRedisClient(redisAddr)
+		if err != nil {
+			log.Fatalf("cannot connect to redis due to: %s", err)
+		}
+		return rs.NewRedisStore(db)
+	default:
+		return inmem.NewInmemStore()
+	}
+}
+
+func initRedisClient(addr string) (*redis.Client, error) {
 	rc := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: "", // no password set
-		DB:       db,
+		DB:       0,
 	})
 	err := rc.Ping(context.Background()).Err()
 	if err != nil {
 		return nil, err
 	}
 	return rc, nil
-}
-
-func parseConfig(p string) (Config, error) {
-	c := Config{}
-	rawConfig, err := ioutil.ReadFile(p)
-	if err != nil {
-		flag.Usage()
-		return c, err
-	}
-	err = yaml.Unmarshal(rawConfig, &c)
-	if err != nil {
-		return c, err
-	}
-	return c, nil
 }
