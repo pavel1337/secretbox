@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/pavel1337/secretbox/pkg/crypt"
 	"github.com/pavel1337/secretbox/pkg/storage"
@@ -68,7 +69,13 @@ func cookieStore(typ string) sessions.Store {
 		return store
 
 	default:
-		session := sessions.NewCookieStore([]byte(cookieSecret))
+		var cs []byte
+		if cookieSecret != "" {
+			cs = []byte(cookieSecret)
+		} else {
+			securecookie.GenerateRandomKey(32)
+		}
+		session := sessions.NewCookieStore(cs)
 		session.MaxAge(maxCookieAge)
 		return session
 	}
