@@ -5,7 +5,7 @@
 {{define "body"}}
 	{{with .Secret}}
 	<div class='snippet'>
-		<pre><code>{{.Content}}</code></pre>
+		<pre><code>{{stringify .Content}}</code></pre>
 	</div>
 	{{end}}
 {{end}}

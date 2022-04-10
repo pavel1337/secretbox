@@ -10,7 +10,7 @@
 	{{end}}
 
 	{{with .Secret}}
-	<form action='/secret/{{.Key}}' method='POST'>
+	<form action='/secret/{{.ID}}' method='POST'>
 		<input name="continue" type="hidden" value="true">
 		{{with .Passphrase}}
 			<div class="u-full-width">
