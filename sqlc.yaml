@@ -1,0 +1,7 @@
+version: 1
+packages:
+  - path: "pkg/storage/mysql"
+    name: "mysql"
+    engine: "mysql"
+    schema: "pkg/storage/mysql/sql/schema.sql"
+    queries: "pkg/storage/mysql/sql/query.sql"
