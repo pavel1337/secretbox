@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"time"
 )
 
@@ -57,9 +56,8 @@ func (app *Web) render(w http.ResponseWriter, r *http.Request, name string, td *
 }
 
 func (app *Web) serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-
-	app.errorLog.Output(2, trace)
+	// trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	app.errorLog.Println(err)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
