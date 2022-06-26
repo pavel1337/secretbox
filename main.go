@@ -67,8 +67,7 @@ func cookieStore(typ string) sessions.Store {
 			MaxAge: maxCookieAge,
 		})
 		return store
-
-	default:
+	case "INMEM":
 		var cs []byte
 		if cookieSecret != "" {
 			cs = []byte(cookieSecret)
@@ -78,6 +77,9 @@ func cookieStore(typ string) sessions.Store {
 		session := sessions.NewCookieStore(cs)
 		session.MaxAge(maxCookieAge)
 		return session
+	default:
+		log.Fatalf("unknown cookie store type: %s", typ)
+		return nil
 	}
 }
 
@@ -89,8 +91,11 @@ func secretsStore(typ string) storage.Store {
 			log.Fatalf("cannot connect to redis due to: %s", err)
 		}
 		return rs.NewRedisStore(db)
-	default:
+	case "INMEM":
 		return inmem.NewInmemStore()
+	default:
+		log.Fatalf("unknown secrets store type: %s", typ)
+		return nil
 	}
 }
 
