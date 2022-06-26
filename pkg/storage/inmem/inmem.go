@@ -8,6 +8,8 @@ import (
 	"github.com/pavel1337/secretbox/pkg/storage"
 )
 
+var _ storage.Store = &inmemStore{}
+
 type inmemStore struct {
 	m    map[string]storage.Secret
 	mTtl map[string]time.Time
@@ -56,9 +58,10 @@ func (is *inmemStore) Exists(id string) bool {
 
 }
 
-func (is *inmemStore) Get(id string) (*storage.Secret, error) {
-	is.lock.RLock()
-	defer is.lock.RUnlock()
+// GetAndDelete returns secret and deletes it from store
+func (is *inmemStore) GetAndDelete(id string) (*storage.Secret, error) {
+	is.lock.Lock()
+	defer is.lock.Unlock()
 	t, ok := is.mTtl[id]
 	if !ok || t.Before(time.Now()) {
 		return nil, storage.ErrNoRecord
@@ -67,6 +70,8 @@ func (is *inmemStore) Get(id string) (*storage.Secret, error) {
 	if !ok {
 		return nil, storage.ErrNoRecord
 	}
+	delete(is.m, id)
+	delete(is.mTtl, id)
 	secret.ID = id
 	return &secret, nil
 }

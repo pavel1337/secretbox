@@ -11,7 +11,7 @@ type Secret struct {
 type Store interface {
 	Insert(s Secret, ttlMinutes int) (string, error)
 	Exists(id string) bool
-	Get(id string) (*Secret, error)
+	GetAndDelete(id string) (*Secret, error)
 	Delete(id string) error
 }
 

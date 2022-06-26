@@ -21,7 +21,7 @@ func TestInmemStore(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, s.Exists(id))
 
-	newS, err := s.Get(id)
+	newS, err := s.GetAndDelete(id)
 	assert.NoError(t, err)
 
 	assert.Equal(t, newS.Passphrase, secret.Passphrase)
@@ -33,13 +33,13 @@ func TestInmemStore(t *testing.T) {
 
 	assert.False(t, s.Exists(id))
 
-	newS, err = s.Get(id)
+	newS, err = s.GetAndDelete(id)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, storage.ErrNoRecord)
 
 	id, _ = s.Insert(secret, -60)
 	assert.False(t, s.Exists(id))
-	newS, err = s.Get(id)
+	newS, err = s.GetAndDelete(id)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, storage.ErrNoRecord)
 
