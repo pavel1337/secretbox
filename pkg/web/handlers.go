@@ -13,18 +13,13 @@ import (
 func (app *Web) showSecretForm(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.storage.Get(id)
-	if err == storage.ErrNoRecord {
+	ok := app.storage.Exists(id)
+	if !ok {
 		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
 	}
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
 	app.render(w, r, "showForm.page.tmpl", &templateData{
-		Secret: s, Form: forms.New(nil),
+		ID: id, Form: forms.New(nil),
 	})
 }
 
@@ -37,7 +32,7 @@ func (app *Web) showSecret(w http.ResponseWriter, r *http.Request) {
 
 	id := r.URL.Query().Get(":id")
 
-	s, err := app.storage.Get(id)
+	s, err := app.storage.GetAndDelete(id)
 
 	if err == storage.ErrNoRecord {
 		app.render(w, r, "secret404.page.tmpl", &templateData{})
@@ -55,16 +50,6 @@ func (app *Web) showSecret(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		form.Del("passphrase")
 		app.render(w, r, "showForm.page.tmpl", &templateData{Secret: s, Form: form})
-		return
-	}
-
-	err = app.storage.Delete(id)
-	if err == storage.ErrNoRecord {
-		app.notFound(w)
-		return
-	}
-	if err != nil {
-		app.serverError(w, err)
 		return
 	}
 
