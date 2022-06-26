@@ -14,7 +14,6 @@ type templateData struct {
 	Flash       string
 	Form        *forms.Form
 	Secret      *storage.Secret
-	ID          string
 }
 
 func humanDate(t time.Time) string {

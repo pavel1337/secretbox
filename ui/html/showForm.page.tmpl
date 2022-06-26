@@ -9,8 +9,8 @@
 		<label class="u-full-width error">{{.}}</label>
 	{{end}}
 
-	{{with .ID}}
-	<form action='/secret/{{.}}' method='POST'>
+	{{with .Secret}}
+	<form action='/secret/{{.ID}}' method='POST'>
 		<input name="continue" type="hidden" value="true">
 		{{with .Passphrase}}
 			<div class="u-full-width">

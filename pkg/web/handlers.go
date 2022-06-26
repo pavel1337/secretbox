@@ -13,13 +13,18 @@ import (
 func (app *Web) showSecretForm(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get(":id")
 
-	ok := app.storage.Exists(id)
-	if !ok {
+	s, err := app.storage.Get(id)
+	if err == storage.ErrNoRecord {
 		app.render(w, r, "secret404.page.tmpl", &templateData{})
 		return
 	}
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	app.render(w, r, "showForm.page.tmpl", &templateData{
-		ID: id, Form: forms.New(nil),
+		Secret: s, Form: forms.New(nil),
 	})
 }
 

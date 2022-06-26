@@ -76,6 +76,22 @@ func (is *inmemStore) GetAndDelete(id string) (*storage.Secret, error) {
 	return &secret, nil
 }
 
+// Get returns secret from store
+func (is *inmemStore) Get(id string) (*storage.Secret, error) {
+	is.lock.RLock()
+	defer is.lock.RUnlock()
+	t, ok := is.mTtl[id]
+	if !ok || t.Before(time.Now()) {
+		return nil, storage.ErrNoRecord
+	}
+	secret, ok := is.m[id]
+	if !ok {
+		return nil, storage.ErrNoRecord
+	}
+	secret.ID = id
+	return &secret, nil
+}
+
 func (is *inmemStore) Delete(id string) error {
 	is.lock.Lock()
 	defer is.lock.Unlock()

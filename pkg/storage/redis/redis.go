@@ -50,9 +50,33 @@ func (ss *redisStore) Exists(id string) bool {
 	return true
 }
 
+// Get returns secret from store
+func (ss *redisStore) Get(key string) (*storage.Secret, error) {
+	bb, err := ss.rdb.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, storage.ErrNoRecord
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var s storage.Secret
+	err = json.Unmarshal(bb, &s)
+	if err != nil {
+		return nil, err
+	}
+
+	s.ID = key
+
+	return &s, nil
+}
+
 // GetAndDelete returns secret and deletes it from store
 func (ss *redisStore) GetAndDelete(key string) (*storage.Secret, error) {
 	bb, err := ss.rdb.GetDel(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, storage.ErrNoRecord
+	}
 	if err != nil {
 		return nil, err
 	}
