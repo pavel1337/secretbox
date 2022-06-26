@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: secretbox-deployment
+  name: secretbox-deployment
+spec:
+  replicas: 1 # should be 1 if in in-memory mode
+  selector:
+    matchLabels:
+      app: secretbox-deployment
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: secretbox-deployment
+    spec:
+      containers:
+      - image: pv1337/secretbox
+        name: secretbox
+        resources: {}
+        envFrom:
+        - configMapRef:
+            name: secretbox-configmap
+        - secretRef:
+            name: secretbox-secrets
+status: {}
