@@ -22,6 +22,9 @@ var _ Crypter = &AESGCM{}
 
 func NewAESGCM(encryptionKey string) (*AESGCM, error) {
 	key := []byte(encryptionKey)
+	if len(key) == 0 {
+		return nil, fmt.Errorf("AESGCM: encryption key cannot be empty")
+	}
 	if len(key) != 32 {
 		return nil, fmt.Errorf("AESGCM: encryption key is not 32 characters: %v", encryptionKey)
 	}
