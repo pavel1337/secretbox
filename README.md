@@ -63,10 +63,11 @@ kubectl apply -n secretbox -f kubernetes/service.yml
 kubectl port-forward -n secretbox svc/secretbox-service 8080
 ```
 ## TODO
+- add password generation feature (done)
 - embed files into binary
-- add MySQL support
 - add more tests
 - expose a JSON API
+- add MySQL support
 
 ### Credits
 

@@ -131,6 +131,60 @@ func (app *Web) createSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, "faq.page.tmpl", &templateData{Form: form})
-	// http.Redirect(w, r, "/", http.StatusSeeOther)
+	app.render(w, r, "faq.page.tmpl", &templateData{
+		Form:            form,
+		PlaintextSecret: stringContent,
+	})
+}
+
+// generatePassword handles POST request and renders faq.page.tmpl with generated password
+func (app *Web) generatePassword(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := forms.New(r.PostForm)
+
+	password, err := app.pwgen.Generate(16)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	ciphertext, err := app.crypter.Encrypt([]byte(password))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	var s storage.Secret
+	s.Content = ciphertext
+
+	if strings.TrimSpace(form.Get("passphrase")) != "" {
+		s.Passphrase = form.Get("passphrase")
+	} else {
+		s.Passphrase = ""
+	}
+
+	ttlMinutes, _ := strconv.Atoi(form.Get("expires"))
+
+	id, err := app.storage.Insert(s, ttlMinutes)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	link := fmt.Sprintf("%s/secret/%s", app.url, id)
+	err = app.addFlash(w, r, link)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.render(w, r, "faq.page.tmpl", &templateData{
+		Form:            form,
+		PlaintextSecret: string(password),
+	})
 }

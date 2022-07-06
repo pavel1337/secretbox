@@ -27,7 +27,7 @@
 		        <option value="1440" {{if (eq $exp "1440")}}selected{{end}}>One Day</option>
 	      	</select>
 	    </div>
-		
+
 		<div class="u-full-width">
 			<label for="passphrase">Passphrase:</label>
 			{{with .Errors.Get "passphrase"}}
@@ -38,11 +38,11 @@
 
 		<div>
 			<button class="u-full-width" type="submit">Create a secret link*</button>
-			<p class="u-full-width">* A secret link only works once and then disappears forever.</p>
 		</div>
-
-
-
+		<div>
+			<button class="u-full-width" type="submit" formaction='/secret/generate'>Or generate password</button>
+		</div>
+		<p class="u-full-width">* A secret link only works once and then disappears forever.</p>
 	{{end}}
 </form>
 {{end}}
