@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/pavel1337/secretbox/pkg/crypt"
+	"github.com/pavel1337/secretbox/pkg/pwgen"
 	"github.com/pavel1337/secretbox/pkg/storage"
 )
 
@@ -15,6 +16,7 @@ type Web struct {
 	url           string
 	errorLog      *log.Logger
 	infoLog       *log.Logger
+	pwgen         pwgen.PasswordGenerator
 	session       sessions.Store
 	storage       storage.Store
 	crypter       crypt.Crypter
@@ -33,6 +35,7 @@ func New(session sessions.Store, store storage.Store, crypter crypt.Crypter) *We
 	return &Web{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
+		pwgen:         pwgen.NewPasswordGenerator(pwgen.DefaultAlphabet),
 		session:       session,
 		storage:       store,
 		crypter:       crypter,
